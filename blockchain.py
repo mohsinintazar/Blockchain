@@ -1,7 +1,4 @@
 # Module 1 - Create a Blockchain
-# To be installed:
-# Flask: pip install Flask
-# Postman: Http Client
 
 # Import libraries
 import datetime
@@ -92,7 +89,7 @@ class Blockchain:
             ### Now set the 2nd part of puzzle where we declare that if the
             ### initial 5 digits are 00000 then set the check_proof to True
             ### otherwise increment new_proof by 1 and check again
-            if hash_operation[:4] == '00000':
+            if hash_operation[:5] == '00000':
                 check_proof = True
             else:
                 new_proof += 1
@@ -101,5 +98,82 @@ class Blockchain:
         ### can be returned to the create_block method
         return new_proof
     
+    ### Define a method to check if everything is fine in blockchain, first check
+    ### if each block of the blockchain has correct proof of work by solving the
+    ### problem to get a SHA256 value starting with 00000 leading zeros. Second we
+    ### check that previous hash of each block is equal to the hash of its
+    ### previous block.
     
+    ### This method is going to take in a block and return SHA256 cryptographic
+    ### hash of the block.
+    def hash(self, block):
+        ### Because each block of our blockchain is going to have a dictionary
+        ### format so, first we will need to convert it to string through
+        ### json lib which we imported earlier by dumps function. We don't
+        ### use the str function to convert it to string because later we are
+        ### going to use the json format and str will not return json format.
+        ### So, we are going to introduce a new variable encoded_block which
+        ### will return the exact SHA256 cryptographic value that can be accepted
+        ### by the hashlib.sha256 library. Here we are going to set the sort_keys
+        ### true so, that the dictionary can be sorted according to the index.
+        
+        encoded_block = json.dumps(block,sort_keys = True).encode()
+        
+        ### Now we pass the encoded block into the hashlib library to return a
+        ### sha256 value and then convert it to hexadecimal by hexdigest method.
+        return hashlib.sha256(encoded_block).hexdigest()
+    
+    ### Now this is the second step where we will be looping through all of the
+    ### blocks to see if the chain is valid.
+    def is_chain_valid(self, chain):
+        ### Now to start the loop we are going to initialize the variables of
+        ### the loop first so, we initialize the block index. As we are going to
+        ### check the 'previous_hash' value of current block is equal to it's  
+        ### previous block hash so, we will also need to initialize the previous 
+        ### block variable that has the first block of the chain which we get
+        ### by index 0 of the chain. Then at the end of the WHILE loop we will
+        ### update the value of this previous block variable to be equal to the 
+        ### new block that we are dealing with in the itteration of the loop.
+        previous_block = chain[0]
+        block_index = 1
+        
+        ### Now to start itterating WHILE loop we are going to set the condition
+        ### that the block index should be less than the length of the chain.
+        while block_index < len(chain):
+            ### Now we check two things, first the hash is equal to the previous
+            ### block hash and second the proof of work is valid.
+            ### So, first we are going to get the current block and by setting
+            ### the index of the chain to block_index which means we start from
+            ### first block of the chain.
+            block = chain[block_index]
+            
+            ### Now we set the conditional statement to check if the 'previous_hash'
+            ### value is different than the hash value of previous block then
+            ### we will return false because that means chain is not valid.
+            if block['previous_hash'] != self.hash(previous_block):
+                return False
+            
+            ### Now we do the check upon the problem if it is solved like the
+            ### cryptographic value starts with leading 00000. So, we will take
+            ### the previous proof from our variable 'previous_block' and then
+            ### we take the current proof by taking the 'proof' key of the current
+            ### block and then we will compute the hash operation between both.
+            previous_proof = previous_block['proof']
+            
+            ### Now we take the current block proof
+            proof = block['proof']
+    
+            hash_operation = hashlib.sha256(str(proof**4 - previous_proof**4).encode()).hexdigest()
+            
+            if hash_operation[:5] != '00000':
+                return False
+            
+            ### Now we need to update our looping variables, so, now the previous
+            ### block will become our current block and we will also increment
+            ### block_index by 1.
+            previous_block = block
+            block_index += 1
+            
+        ### Finally if everything went well then we will return true in the loop
+        return True
 # Part-2 - Mining our Blockchain
