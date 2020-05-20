@@ -176,4 +176,60 @@ class Blockchain:
             
         ### Finally if everything went well then we will return true in the loop
         return True
+    
 # Part-2 - Mining our Blockchain
+
+## 1 - Creating Web App
+### Creating the Flask web application
+app = Flask(__name__)
+    
+## 2 - Creating a Blockchain
+### Creating an instance of the Blockchain class which we created in part-1
+blockchain = Blockchain()
+
+## 3- Mining a new Block
+### Now we initialize the route decorator 
+@app.route('/mine_block', methods=['GET'])
+def mine_block():
+    ### Here first we need to get the previous block in order to get it's proof
+    previous_block = blockchain.get_previous_block()
+    previous_proof = previous_block['proof']
+    
+    ### Now we will call the proof of work method as we get the only argument
+    ### which it is going to take is previous_proof
+    proof = blockchain.proof_of_work(previous_proof)
+    
+    ### Now once the proof is acquired we need to create this new block and
+    ### for that we need two arguments which are proof that we already got and
+    ### previous_hash and to get that value we will use the hash method
+    previous_hash = blockchain.hash(previous_block)
+    
+    ### Now let's create this new block and add it to the chain
+    block = blockchain.create_block(proof, previous_hash)
+    
+    ### Now let's create a response to display it in POSTMAN
+    response = {'message': 'Congrats, you have just mined a block',
+                'index': block['index'],
+                'timestamp': block['timestamp'],
+                'proof': block['proof'],
+                'previous_hash': block['previous_hash']}
+    
+    ### Now let's jsonify this response to get it displayed as JSON and it's
+    ### response status code will be 200
+    return jsonify(response), 200
+
+## 4- Get the full blockchain
+@app.route('/get_chain', methods = ['GET'])
+def get_chain():
+    ### Now we just need to get the full chain from the blockchain object
+    response = {'chain': blockchain.chain,
+                'length': len(blockchain.chain)}
+    
+    ### Now let's jsonify this response to get it displayed as JSON and it's
+    ### response status code will be 200
+    return jsonify(response), 200
+
+## 5- Running the app
+    ### In order to run the app it requires two arguments, first is the host
+    ### and second is port number, then we select the whole code and execute it
+app.run(host = '0.0.0.0', port = 5000)
